@@ -1,0 +1,3 @@
+<ParaViewReaders>
+  <Reader name="FitsReader" />
+</ParaViewReaders>
