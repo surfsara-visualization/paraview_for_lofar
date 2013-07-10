@@ -1,4 +1,5 @@
 #include "FitsReader.h"
+#include <ctime>
 
 //#define LOG(msg)
 #define LOG(msg) std::cout << __PRETTY_FUNCTION__ << ", l" << __LINE__ << ": " << msg << std::endl;

@@ -14,6 +14,9 @@
 =========================================================================*/
 #include "SliceImage.h"
 
+#include <ctime>
+#include <cmath>
+
 #include "vtkLine.h"
 #include "vtkDataArray.h"
 #include "vtkPolyDataAlgorithm.h"
@@ -26,7 +29,6 @@
 #include "vtkPointData.h"
 #include "vtkStreamingDemandDrivenPipeline.h"
 
-#include <math.h>
 #include <vtksys/ios/sstream>
 
 vtkStandardNewMacro(SliceImage);
@@ -56,6 +58,7 @@ int SliceImage::RequestInformation(vtkInformation*,
 		vtkInformationVector** inputVector,
 		vtkInformationVector* outputVector)
 {
+  using namespace std;
 	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	// Get input and output pipeline information.
 	vtkInformation* outInfo = outputVector->GetInformationObject(0);
@@ -91,8 +94,8 @@ int SliceImage::RequestInformation(vtkInformation*,
 		}
 
 		m_n_pixels = std::max(
-				std::abs(m_pt1_in_pixels[0]-m_pt0_in_pixels[0]),
-				std::abs(m_pt1_in_pixels[1]-m_pt0_in_pixels[1]));
+				abs(m_pt1_in_pixels[0]-m_pt0_in_pixels[0]),
+				abs(m_pt1_in_pixels[1]-m_pt0_in_pixels[1]));
 
 		m_extent[0] = 0;
 		m_extent[1] = m_n_pixels;
