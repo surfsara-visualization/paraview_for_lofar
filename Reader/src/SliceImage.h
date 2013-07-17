@@ -25,9 +25,12 @@
 
 #include "vtkImagingGeneralModule.h" // For export macro
 #include "vtkThreadedImageAlgorithm.h"
+#include <vector>
 
+class vtkParametricFunctionSource;
 class vtkPolyDataAlgorithm;
 class vtkImplicitFunction;
+class vtkParametricSpline;
 
 class VTKIMAGINGGENERAL_EXPORT SliceImage : public vtkThreadedImageAlgorithm
 {
@@ -36,23 +39,20 @@ public:
 	vtkTypeMacro(SliceImage,vtkThreadedImageAlgorithm);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
-	virtual void SetCurve(vtkPolyDataAlgorithm*);
-	vtkGetObjectMacro(Curve,vtkPolyDataAlgorithm);
-
-	virtual void SetCutFunction(vtkImplicitFunction*);
-	vtkGetObjectMacro(CutFunction,vtkImplicitFunction);
+	virtual void SetCurve(vtkParametricSpline *);
+	virtual void SetCurve(vtkPolyDataAlgorithm *);
 
 	virtual unsigned long GetMTime();
 
 	void get(int delta, int &x, int &y) const;
 
+	// Returns whether the point lies in the input domain.
+	bool WorldToPixelCoordinates(const double world_pos[3], int pixel_pos[3]);
+
 protected:
 
 	SliceImage();
 	~SliceImage() {};
-
-	vtkPolyDataAlgorithm *Curve;
-	vtkImplicitFunction *CutFunction;
 
 	virtual int RequestInformation (vtkInformation*,
 			vtkInformationVector**,
@@ -76,11 +76,36 @@ private:
 	SliceImage(const SliceImage&);  // Not implemented.
 	void operator=(const SliceImage&);  // Not implemented.
 
+	template <class T>
+	void SliceImageExecute(SliceImage *self,
+			vtkImageData *inData, T *inPtr,
+			vtkImageData *outData, double *outPtr,
+			int outExt[6], int id);
+
+	enum ClipType {
+		LINE,
+		SPLINE,
+	} m_clip_type;
+	vtkParametricSpline *Spline;
+	vtkPolyDataAlgorithm *LineSegment;
+
 	int m_pt0_in_pixels[3];
 	int m_pt1_in_pixels[3];
 	int m_n_pixels;
 
-	int m_extent[6];
+	double m_input_origin[3];
+	double m_input_spacing[3];
+	int m_input_extent[6];
+
+	int m_output_extent[6];
+
+private:
+	struct SplinePoint {
+		double pt[3];
+		double cumm_length;
+	};
+	std::vector<SplinePoint> LinearizeClippingFunction();
+
 };
 
 #endif

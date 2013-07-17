@@ -1,4 +1,98 @@
 <ServerManagerConfiguration>
+  <ProxyGroup name="lofar_sources">
+    <Proxy class="vtkParametricSpline"
+           name="Spline">
+      <DoubleVectorProperty command="SetPoint"
+                            default_values="0 0 0 1 0 0"
+                            name="Points"
+                            number_of_elements="6"
+                            number_of_elements_per_command="3"
+                            repeat_command="1"
+                            set_number_command="SetNumberOfPoints"
+                            use_index="1"></DoubleVectorProperty>
+      <IntVectorProperty command="SetClosed"
+                         default_values="0"
+                         name="Closed"
+                         number_of_elements="1">
+        <BooleanDomain name="bool" />
+      </IntVectorProperty>
+      <Hints>
+        <!-- Hints are metadata associated with the proxy.
+             As far as the ServerManager is concerned, Hints have no
+             significance. GUI is free to interpret the hints as
+             it chooses. Hints provide a mechanism to add some GUI
+             pertinant information to the server manager XML.
+        -->
+        <PropertyGroup type="Spline">
+          <Property function="HandlePositions"
+                    name="Points" />
+          <Property function="Closed"
+                    name="Closed" />
+          <!-- <Property function="WorldPosition" name="Points" /> -->
+        </PropertyGroup>
+      </Hints>
+      <!-- end of Spline -->
+    </Proxy>
+
+    <SourceProxy class="vtkLineSource"
+                 label="Lofar Line Source"
+                 name="LineSource">
+      <DoubleVectorProperty animateable="1"
+                            command="SetPoint1"
+                            default_values="0.0 0.0 0.0"
+                            name="Point1"
+                            number_of_elements="3">
+        <BoundsDomain default_mode="min"
+                      mode="normal"
+                      name="range">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="DummyInput" />
+          </RequiredProperties>
+        </BoundsDomain>
+      </DoubleVectorProperty>
+      <DoubleVectorProperty animateable="1"
+                            command="SetPoint2"
+                            default_values="0.0 0.0 0.0"
+                            name="Point2"
+                            number_of_elements="3">
+        <BoundsDomain default_mode="max"
+                      mode="normal"
+                      name="range">
+          <RequiredProperties>
+            <Property function="Input"
+                      name="DummyInput" />
+          </RequiredProperties>
+        </BoundsDomain>
+      </DoubleVectorProperty>
+      <IntVectorProperty command="SetResolution"
+                         default_values="6"
+                         name="Resolution"
+                         number_of_elements="1">
+        <IntRangeDomain min="1"
+                        name="range" />
+      </IntVectorProperty>
+      <InputProperty is_internal="1"
+                     name="DummyInput">
+        <!-- Used when this source is added to a proxy list domain. -->
+      </InputProperty>
+      <Hints>
+        <PropertyGroup type="LineSource">
+          <Property function="Point1WorldPosition"
+                    name="Point1" />
+          <Property function="Point2WorldPosition"
+                    name="Point2" />
+          <Property function="Resolution"
+                    name="Resolution" />
+        </PropertyGroup>
+        <ProxyList>
+          <Link name="DummyInput"
+                with_property="Input" />
+        </ProxyList>
+      </Hints>
+      <!-- End LineSource -->
+    </SourceProxy>
+  </ProxyGroup>
   <ProxyGroup name="sources">
     <SourceProxy name="FitsReader" 
                  class="FitsReader"
@@ -30,7 +124,8 @@
   
   <ProxyGroup name="filters">
 
-    <SourceProxy name="SliceImage" class="SliceImage" label="Slice image data.">
+    <!-- *** SliceImage *** -->
+    <SourceProxy name="SliceImage" class="SliceImage" label="Slice image data">
       <Documentation
           long_help="NGHK: Long todo."
           short_help="NGHK: Todo.">
@@ -46,17 +141,18 @@
           <DataType value="vtkImageData"/>
         </DataTypeDomain>
       </InputProperty> 
-          <ProxyProperty command="SetCurve"
-          label="Slice curve"
-          name="Curve">
-          <ProxyGroupDomain name="groups">
+      <LineSourceWidget trace_name="Line" />
+      <ProxyProperty command="SetCurve"
+                     label="Slice curve"
+                     name="Curve">
+        <ProxyGroupDomain name="groups">
           <Group name="sources" />
-          </ProxyGroupDomain>
-          <ProxyListDomain name="proxy_list">
-          <Proxy group="sources" name="LineSource" />
-          <Proxy group="parametric_functions" name="Spline" />
-          </ProxyListDomain>
-          </ProxyProperty>
+        </ProxyGroupDomain>
+        <ProxyListDomain name="proxy_list">
+          <Proxy group="lofar_sources" name="Spline" />
+          <Proxy group="lofar_sources" name="LineSource" />
+        </ProxyListDomain>
+      </ProxyProperty>
     </SourceProxy>
 
 
