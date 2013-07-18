@@ -86,7 +86,7 @@ int LofarApplyMask::RequestUpdateExtent(vtkInformation*,
 // out of extent.
 template <class T>
 void LofarApplyMaskExecute(LofarApplyMask *self,
-		vtkImageData *inData, float *inPtr, T *maskPtr,
+		vtkImageData *inData, T *inPtr, char *maskPtr,
 		vtkImageData *outData, double *outPtr,
 		int outExt[6], int id)
 {
@@ -223,6 +223,12 @@ void LofarApplyMask::ThreadedRequestData(vtkInformation*,
 		vtkErrorMacro("No mask array was found. Cannot execute");
 		return;
 	}
+	if(maskArray->GetDataType() != VTK_CHAR)
+	{
+		vtkErrorMacro("Execute: input ScalarType is "
+				<< inputArray->GetDataTypeAsString() << " but must be char.");
+		return;
+	}
 
 	// Gradient makes sense only with one input component.  This is not
 	// a Jacobian filter.
@@ -240,10 +246,10 @@ void LofarApplyMask::ThreadedRequestData(vtkInformation*,
 	void* inPtr = inputArray->GetVoidPointer(0);
 	void* maskPtr = maskArray->GetVoidPointer(0);
 	double* outPtr = static_cast<double *>(output->GetScalarPointerForExtent(outExt));
-	switch(maskArray->GetDataType())
+	switch(inputArray->GetDataType())
 	{
 	vtkTemplateMacro(
-			LofarApplyMaskExecute(this, input, static_cast<float*>(inPtr), static_cast<VTK_TT*>(maskPtr),
+			LofarApplyMaskExecute(this, input, static_cast<VTK_TT*>(inPtr), static_cast<char *>(maskPtr),
 					output, outPtr, outExt, threadId)
 	);
 	default:

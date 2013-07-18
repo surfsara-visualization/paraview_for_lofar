@@ -22,14 +22,14 @@ def load_fits(filename):
   Show()
   return result
 
-data_directory = '/home/nicok/Projects/lofar/Data'
+data_directory = '/home/nicok/Projects/paraview_for_lofar/Data'
 #for x in range(1):
 #  for y in range(1):
 #    filename = data_directory+'/offset_'+str(x)+'_'+str(y)+'.fits'
 #    load_fits(filename)
 
-#load_fits(data_directory+"/ngc4565_30arcsec.fits")
-load_fits(data_directory+"/p-rmcube-clean.fits")
+load_fits(data_directory+"/ngc4565_30arcsec.fits")
+#load_fits(data_directory+"/p-rmcube-clean.fits")
 
 
 def change_representation_to_slice(representation, slice_nr = 0):
@@ -53,8 +53,8 @@ for src in sources:
     slice = Sliceimagedata(Input=src)
     slice_representation = GetDisplayProperties(slice)
     #change_representation_to_slice(slice_representation)
-    slice.Slicecurve.Point1 = [3.313, 0.450, 0.003]
-    slice.Slicecurve.Point2 = [3.307, 0.457, 0.003]
+    #slice.Slicecurve.Point1 = [3.313, 0.450, 0.003]
+    #slice.Slicecurve.Point2 = [3.307, 0.457, 0.003]
     Show()
 
 RenderView2 = CreateRenderView()

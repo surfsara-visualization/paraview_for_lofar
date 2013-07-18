@@ -157,28 +157,27 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
             count++;
         }
 
-        {
+        {   // Copy data to the tmp buffer, y-kernel
+        	boost::scoped_array<T *> tmp_rows(new T *[N]);
             double *tmp_idx = tmp_img.get();
             for (int y=0; y<=maxY; ++y) {
-                for (int x=0; x<=maxX; ++x) {
-                    *tmp_idx = 0.0;
-                    ++tmp_idx;
-                }
-            }
-        }
-        
-        {   // Copy data to the tmp buffer, y-kernel
-            double *tmp_rows[N];
-            for (int y=0; y<=maxY; ++y) {
-                for (int i=-std::min(y, N_over_2); i<=N_over_2 && y+i <= maxY; ++i)
-                    tmp_rows[i] = &tmp_img[(y+i) * (maxX+1)];
+            	// Zero out the values
+                for (int x=0; x<=maxX; ++x) tmp_idx[x] = 0.0;
+
+                // Get the rows that are multiplied with the kernel
+                for (int yp = std::max(-N_over_2, -y); yp < std::min(maxY-y, N_over_2); ++yp)
+                    tmp_rows[N_over_2+yp] = &inPtr[yp * (maxX+1)];
 
                 for (int x=0; x<=maxX; ++x) {
-                    for (int i=-std::min(y, N_over_2); i<=N_over_2 && y+i <= maxY; ++i) {
-                        *tmp_rows[i] += kernel[i+N_over_2] * (*inPtr);
-                        tmp_rows[i]++;
+                    for (int yp = std::max(y-N_over_2, 0)-y; yp < std::min(maxY, y+N_over_2)-y; ++yp) {
+                    	// Multiply the kernel with the data
+                		*tmp_idx += kernel[N_over_2 + yp] * *tmp_rows[N_over_2+yp];
+                		 // Go to the next element in the row
+                		tmp_rows[N_over_2+yp]++;
                     }
 
+                    // next pixel
+            		tmp_idx++;
                     inPtr++;
                 }
                 inPtr += inIncY;
@@ -195,6 +194,7 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
                 for (int x=0; x<=maxX; ++x) {
                     for (int i=-std::min(x, N_over_2); i<=N_over_2 && x+i <= maxX; ++i)
                         outPtr[i] += kernel[i+N_over_2] * (*tmp_idx);
+                    //*outPtr = *tmp_idx;
                     tmp_idx++;
                     outPtr++;
                 }
