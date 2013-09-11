@@ -176,7 +176,7 @@ int AccumulateSlices::RequestData(
 	vtkDataArray* outArray = output->GetPointData()->GetScalars();
 	vtksys_ios::ostringstream newname;
 	newname << (outArray->GetName()?outArray->GetName():"")
-    				<< "Accumulated";
+    						<< "Accumulated";
 	outArray->SetName(newname.str().c_str());
 
 	return 1;

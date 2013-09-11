@@ -9,34 +9,34 @@
 class VTKIMAGINGGENERAL_EXPORT LofarApplyMask : public vtkThreadedImageAlgorithm
 {
 public:
-  static LofarApplyMask *New();
-  vtkTypeMacro(LofarApplyMask,vtkThreadedImageAlgorithm);
-  void PrintSelf(ostream& os, vtkIndent indent);
+	static LofarApplyMask *New();
+	vtkTypeMacro(LofarApplyMask,vtkThreadedImageAlgorithm);
+	void PrintSelf(ostream& os, vtkIndent indent);
 
 protected:
-  LofarApplyMask();
-  ~LofarApplyMask() {};
+	LofarApplyMask();
+	~LofarApplyMask() {};
 
-  virtual int RequestInformation (vtkInformation*,
-                                  vtkInformationVector**,
-                                  vtkInformationVector*);
-  virtual int RequestUpdateExtent(vtkInformation*,
-                                  vtkInformationVector**,
-                                  vtkInformationVector*);
-  virtual int RequestData(vtkInformation*,
-                          vtkInformationVector**,
-                          vtkInformationVector*);
+	virtual int RequestInformation (vtkInformation*,
+			vtkInformationVector**,
+			vtkInformationVector*);
+	virtual int RequestUpdateExtent(vtkInformation*,
+			vtkInformationVector**,
+			vtkInformationVector*);
+	virtual int RequestData(vtkInformation*,
+			vtkInformationVector**,
+			vtkInformationVector*);
 
-  void ThreadedRequestData(vtkInformation*,
-                           vtkInformationVector**,
-                           vtkInformationVector*,
-                           vtkImageData*** inData,
-                           vtkImageData** outData,
-                           int outExt[6],
-                           int threadId);
+	void ThreadedRequestData(vtkInformation*,
+			vtkInformationVector**,
+			vtkInformationVector*,
+			vtkImageData*** inData,
+			vtkImageData** outData,
+			int outExt[6],
+			int threadId);
 private:
-  LofarApplyMask(const LofarApplyMask&);  // Not implemented.
-  void operator=(const LofarApplyMask&);  // Not implemented.
+	LofarApplyMask(const LofarApplyMask&);  // Not implemented.
+	void operator=(const LofarApplyMask&);  // Not implemented.
 };
 
 #endif

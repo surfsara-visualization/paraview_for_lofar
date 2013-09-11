@@ -90,7 +90,7 @@ void LofarIntegrateFrequenciesExecute(LofarIntegrateFrequencies *self,
 		vtkImageData *outData, double *outPtr,
 		int outExt[6], int id)
 {
-    std::cout << __PRETTY_FUNCTION__ << std::endl;
+	std::cout << __PRETTY_FUNCTION__ << std::endl;
 	int idxX, idxY, idxZ;
 	int maxX, maxY;
 	vtkIdType inIncX, inIncY, inIncZ;
@@ -127,8 +127,8 @@ void LofarIntegrateFrequenciesExecute(LofarIntegrateFrequencies *self,
 
 	// Move the pointer to the correct starting position.
 	inPtr += (outExt[0]-inExt[0])*inIncs[0] +
-                 (outExt[2]-inExt[2])*inIncs[1] +
-                 (outExt[4]-inExt[4])*inIncs[2];
+			(outExt[2]-inExt[2])*inIncs[1] +
+			(outExt[4]-inExt[4])*inIncs[2];
 
 	double *outPtr2 = outPtr;
 	for (idxY = 0; idxY <= maxY; idxY++) {
@@ -146,9 +146,9 @@ void LofarIntegrateFrequenciesExecute(LofarIntegrateFrequencies *self,
 		{
 			if (!id)
 			{
-                            if (!(count%target)) {
-                                self->UpdateProgress(count/(50.0*target));
-                            }
+				if (!(count%target)) {
+					self->UpdateProgress(count/(50.0*target));
+				}
 				count++;
 			}
 			for (idxX = 0; idxX <= maxX; idxX++)

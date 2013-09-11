@@ -191,16 +191,16 @@ int LofarMaskNoise::RequestData(
 	vtkDataArray* outArray = output->GetPointData()->GetScalars();
 	vtksys_ios::ostringstream newname;
 	newname << (outArray->GetName()?outArray->GetName():"")
-    				<< "Mask";
+    						<< "Mask";
 	outArray->SetName(newname.str().c_str());
 
 
-    // Why not pass the original array?
-    if (this->GetInputArrayToProcess(0, inputVector))
-    {
-    	output->GetPointData()->AddArray(
-    			this->GetInputArrayToProcess(0, inputVector));
-    }
+	// Why not pass the original array?
+	if (this->GetInputArrayToProcess(0, inputVector))
+	{
+		output->GetPointData()->AddArray(
+				this->GetInputArrayToProcess(0, inputVector));
+	}
 	return 1;
 }
 

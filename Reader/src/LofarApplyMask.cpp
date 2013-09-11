@@ -18,11 +18,11 @@ vtkStandardNewMacro(LofarApplyMask);
 // Construct an instance of LofarApplyMask fitler.
 LofarApplyMask::LofarApplyMask()
 {
-    // by default process active point scalars
-    this->SetInputArrayToProcess(0,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
-                                 vtkDataSetAttributes::SCALARS);
-    this->SetInputArrayToProcess(1,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
-                                 vtkDataSetAttributes::SCALARS);
+	// by default process active point scalars
+	this->SetInputArrayToProcess(0,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
+			vtkDataSetAttributes::SCALARS);
+	this->SetInputArrayToProcess(1,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
+			vtkDataSetAttributes::SCALARS);
 }
 
 //----------------------------------------------------------------------------
@@ -173,17 +173,17 @@ int LofarApplyMask::RequestData(
 	vtkDataArray* outArray = output->GetPointData()->GetScalars();
 	vtksys_ios::ostringstream newname;
 	newname << (outArray->GetName()?outArray->GetName():"")
-    				<< "Masked";
+    						<< "Masked";
 	outArray->SetName(newname.str().c_str());
 
-    // Why not pass the original array?
-    if (this->GetInputArrayToProcess(0, inputVector))
-    {
-    	output->GetPointData()->AddArray(
-    			this->GetInputArrayToProcess(0, inputVector));
-    }
+	// Why not pass the original array?
+	if (this->GetInputArrayToProcess(0, inputVector))
+	{
+		output->GetPointData()->AddArray(
+				this->GetInputArrayToProcess(0, inputVector));
+	}
 
-    return 1;
+	return 1;
 }
 
 //----------------------------------------------------------------------------
