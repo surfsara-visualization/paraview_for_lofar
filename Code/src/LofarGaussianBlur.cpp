@@ -14,7 +14,6 @@
 
 #include <ctime> 
 #include <fftw3.h>
-#include <boost/scoped_array.hpp>
 
 vtkStandardNewMacro(LofarGaussianBlur);
 
@@ -110,6 +109,12 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 	target = static_cast<unsigned long>((maxZ+1)*(maxY+1)/50.0);
 	target++;
 
+	const int N = self->GetKernelSize();
+	const int N_over_2 = N/2;
+        std::vector<double> kernel(N, 0.0);
+	std::vector<double> tmp_img((maxY+1) * (maxX+1), 0.0);
+        std::vector<T *>    tmp_rows(N, NULL);
+
 	// Get increments to march through data
 	inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
 	outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
@@ -131,9 +136,6 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 			(outExt[2]-inExt[2])*inIncs[1] +
 			(outExt[4]-inExt[4])*inIncs[2];
 
-	const int N = self->GetKernelSize();
-	const int N_over_2 = N/2;
-	boost::scoped_array<double> kernel(new double[N]);
 	{
 		double sum = 0.0;
 		for (int i=0; i<N; ++i) kernel[i] = pow(M_E, -(i-(N-1)/2)*(i-(N-1)/2)/(2*N*N));
@@ -142,7 +144,6 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 		for (int i=0; i<N; ++i) kernel[i] /= sum;
 	}
 
-	boost::scoped_array<double> tmp_img(new double[(maxY+1) * (maxX+1)]);
 
 	//    std::clock_t duration = 0;
 	//    std::clock_t total_start = clock();
@@ -158,8 +159,7 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 		}
 
 		{   // Copy data to the tmp buffer, y-kernel
-			boost::scoped_array<T *> tmp_rows(new T *[N]);
-			double *tmp_idx = tmp_img.get();
+			double *tmp_idx = &tmp_img[0];
 			for (int y=0; y<=maxY; ++y) {
 				// Zero out the values
 				for (int x=0; x<=maxX; ++x) tmp_idx[x] = 0.0;
@@ -187,7 +187,7 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 
 		//        std::clock_t start = clock();
 		{   // Copy the data to the output buffer, x-kernel
-			double *tmp_idx = tmp_img.get();
+			double *tmp_idx = &tmp_img[0];
 			for (int y=0; y<=maxY; ++y) {
 				for (int x=0; x<=maxX; ++x) outPtr[x] = 0.0;
 
