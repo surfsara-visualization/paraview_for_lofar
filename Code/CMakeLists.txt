@@ -27,8 +27,8 @@ FIND_PACKAGE(ParaView REQUIRED)
 INCLUDE(${PARAVIEW_USE_FILE})
 
 include_directories("src")
-
-
+include_directories(${QT_INCLUDES})
+message(${QT_INCLUDES})
 IF(PARAVIEW_BUILD_QT_GUI)
   include_directories("${WCS_INCLUDE_DIR}")
   include_directories("${CASACORE_INCLUDE_DIR}")
