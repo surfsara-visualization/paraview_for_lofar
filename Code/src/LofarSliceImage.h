@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    SliceImage.h
+  Module:    LofarSliceImage.h
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -12,16 +12,16 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-// .NAME SliceImage - Computes the gradient vector.
+// .NAME LofarSliceImage - Computes the gradient vector.
 // .SECTION Description
-// SliceImage computes the gradient vector of an image.  The
+// LofarSliceImage computes the gradient vector of an image.  The
 // vector results are stored as scalar components. The Dimensionality
 // determines whether to perform a 2d or 3d gradient. The default is
 // two dimensional XY gradient.  OutputScalarType is always
 // double. Gradient is computed using central differences.
 
-#ifndef __SliceImage_h
-#define __SliceImage_h
+#ifndef __LOFARSLICEIMAGE_H
+#define __LOFARSLICEIMAGE_H
 
 #include "vtkImagingGeneralModule.h" // For export macro
 #include "vtkThreadedImageAlgorithm.h"
@@ -32,11 +32,11 @@ class vtkPolyDataAlgorithm;
 class vtkImplicitFunction;
 class vtkParametricSpline;
 
-class VTKIMAGINGGENERAL_EXPORT SliceImage : public vtkThreadedImageAlgorithm
+class VTKIMAGINGGENERAL_EXPORT LofarSliceImage : public vtkThreadedImageAlgorithm
 {
 public:
-	static SliceImage *New();
-	vtkTypeMacro(SliceImage,vtkThreadedImageAlgorithm);
+	static LofarSliceImage *New();
+	vtkTypeMacro(LofarSliceImage,vtkThreadedImageAlgorithm);
 	void PrintSelf(ostream& os, vtkIndent indent);
 
 	virtual void SetCurve(vtkParametricSpline *);
@@ -51,8 +51,8 @@ public:
 
 protected:
 
-	SliceImage();
-	~SliceImage() {};
+	LofarSliceImage();
+	~LofarSliceImage() {};
 
 	virtual int RequestInformation (vtkInformation*,
 			vtkInformationVector**,
@@ -73,11 +73,11 @@ protected:
 			int threadId);
 
 private:
-	SliceImage(const SliceImage&);  // Not implemented.
-	void operator=(const SliceImage&);  // Not implemented.
+	LofarSliceImage(const LofarSliceImage&);  // Not implemented.
+	void operator=(const LofarSliceImage&);  // Not implemented.
 
 	template <class T>
-	void SliceImageExecute(SliceImage *self,
+	void LofarSliceImageExecute(LofarSliceImage *self,
 			vtkImageData *inData, T *inPtr,
 			vtkImageData *outData, double *outPtr,
 			int outExt[6], int id);

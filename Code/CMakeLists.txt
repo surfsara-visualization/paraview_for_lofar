@@ -44,7 +44,7 @@ IF(PARAVIEW_BUILD_QT_GUI)
     GUI_RESOURCE_FILES gui_resource.xml
     SERVER_MANAGER_SOURCES
       src/FitsReader.h src/FitsReader.cpp
-      src/SliceImage.h src/SliceImage.cpp
+      src/LofarSliceImage.h src/LofarSliceImage.cpp
       src/AccumulateSlices.h src/AccumulateSlices.cpp
       src/LofarGaussianBlur.h src/LofarGaussianBlur.cpp
       src/LofarMaskNoise.h src/LofarMaskNoise.cpp

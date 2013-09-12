@@ -1,5 +1,6 @@
 <ServerManagerConfiguration>
   <ProxyGroup name="lofar_sources">
+    <!-- Spline is used by the image slicer as an input for the slicing function -->
     <Proxy class="vtkParametricSpline"
            name="Spline">
       <DoubleVectorProperty command="SetPoint"
@@ -17,23 +18,14 @@
         <BooleanDomain name="bool" />
       </IntVectorProperty>
       <Hints>
-        <!-- Hints are metadata associated with the proxy.
-             As far as the ServerManager is concerned, Hints have no
-             significance. GUI is free to interpret the hints as
-             it chooses. Hints provide a mechanism to add some GUI
-             pertinant information to the server manager XML.
-        -->
         <PropertyGroup type="Spline">
-          <Property function="HandlePositions"
-                    name="Points" />
-          <Property function="Closed"
-                    name="Closed" />
-          <!-- <Property function="WorldPosition" name="Points" /> -->
+          <Property function="HandlePositions" name="Points" />
+          <Property function="Closed" name="Closed" />
         </PropertyGroup>
       </Hints>
-      <!-- end of Spline -->
     </Proxy>
 
+    <!-- LineSource is used by the image slicer as an input for the slicing function -->
     <SourceProxy class="vtkLineSource"
                  label="Lofar Line Source"
                  name="LineSource">
@@ -125,7 +117,7 @@
   <ProxyGroup name="filters">
 
     <!-- *** SliceImage *** -->
-    <SourceProxy name="Slice image" class="SliceImage" label="Lofar: Slice image data">
+    <SourceProxy name="Slice image" class="LofarSliceImage" label="Lofar: Slice image data">
       <Documentation
           long_help="Takes a slice along a line segment or spline through the spatial axes."
           short_help="Allows the user to specify a line segment or spline along which a slice through the data is taken. All frequency channels are retained.">

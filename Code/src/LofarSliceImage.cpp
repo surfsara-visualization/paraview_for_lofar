@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Visualization Toolkit
-  Module:    SliceImage.cxx
+  Module:    LofarSliceImage.cxx
 
   Copyright (c) Ken Martin, Will Schroeder, Bill Lorensen
   All rights reserved.
@@ -12,7 +12,7 @@
      PURPOSE.  See the above copyright notice for more information.
 
 =========================================================================*/
-#include "SliceImage.h"
+#include "LofarSliceImage.h"
 
 #include <ctime>
 #include <cmath>
@@ -33,16 +33,16 @@
 
 #include <vtksys/ios/sstream>
 
-vtkStandardNewMacro(SliceImage);
+vtkStandardNewMacro(LofarSliceImage);
 
-void SliceImage::SetCurve(vtkPolyDataAlgorithm *line_segment) {
+void LofarSliceImage::SetCurve(vtkPolyDataAlgorithm *line_segment) {
 	this->Spline = NULL;
 	this->LineSegment = line_segment;
 	m_clip_type = LINE;
 
 	this->Modified();
 }
-void SliceImage::SetCurve(vtkParametricSpline *spline) {
+void LofarSliceImage::SetCurve(vtkParametricSpline *spline) {
 	this->Spline = spline;
 	//this->LineSegment = NULL;
 
@@ -51,8 +51,8 @@ void SliceImage::SetCurve(vtkParametricSpline *spline) {
 }
 
 //----------------------------------------------------------------------------
-// Construct an instance of SliceImage filter.
-SliceImage::SliceImage()
+// Construct an instance of LofarSliceImage filter.
+LofarSliceImage::LofarSliceImage()
 {
 	this->Spline = NULL;
 	this->LineSegment = NULL;
@@ -62,13 +62,13 @@ SliceImage::SliceImage()
 }
 
 //----------------------------------------------------------------------------
-void SliceImage::PrintSelf(ostream& os, vtkIndent indent)
+void LofarSliceImage::PrintSelf(ostream& os, vtkIndent indent)
 {
 	this->Superclass::PrintSelf(os, indent);
 }
 
 //----------------------------------------------------------------------------
-int SliceImage::RequestInformation(vtkInformation* information,
+int LofarSliceImage::RequestInformation(vtkInformation* information,
 		vtkInformationVector** inputVector,
 		vtkInformationVector* outputVector)
 {
@@ -108,7 +108,7 @@ int SliceImage::RequestInformation(vtkInformation* information,
 
 //----------------------------------------------------------------------------
 // This method computes the input extent necessary to generate the output.
-int SliceImage::RequestUpdateExtent(vtkInformation*,
+int LofarSliceImage::RequestUpdateExtent(vtkInformation*,
 		vtkInformationVector** inputVector,
 		vtkInformationVector* /*outputVector*/)
 {
@@ -126,7 +126,7 @@ int SliceImage::RequestUpdateExtent(vtkInformation*,
 	return 1;
 }
 
-void SliceImage::get(int delta, int &x, int &y) const
+void LofarSliceImage::get(int delta, int &x, int &y) const
 {
 	float fdelta = delta*1.0/m_n_pixels;
 	if (fdelta < 0) fdelta = 0.0f;
@@ -141,7 +141,7 @@ void SliceImage::get(int delta, int &x, int &y) const
 	else
 		y = m_pt0_in_pixels[1] + (m_pt1_in_pixels[1]-m_pt0_in_pixels[1]) * fdelta;
 }
-bool SliceImage::WorldToPixelCoordinates(const double world_pos[3], int pixel_pos[3])
+bool LofarSliceImage::WorldToPixelCoordinates(const double world_pos[3], int pixel_pos[3])
 {
 	bool in_domain = true;
 	for (int i=0; i<3; ++i) {
@@ -164,7 +164,7 @@ bool SliceImage::WorldToPixelCoordinates(const double world_pos[3], int pixel_po
 // it handles boundaries. Pixels are just replicated to get values
 // out of extent.
 template <class T>
-void SliceImage::SliceImageExecute(SliceImage *self,
+void LofarSliceImage::LofarSliceImageExecute(LofarSliceImage *self,
 		vtkImageData *inData, T *inPtr,
 		vtkImageData *outData, double *outPtr,
 		int outExt[6], int id)
@@ -261,7 +261,7 @@ void SliceImage::SliceImageExecute(SliceImage *self,
 	}
 }
 
-int SliceImage::RequestData(
+int LofarSliceImage::RequestData(
 		vtkInformation* request,
 		vtkInformationVector** inputVector,
 		vtkInformationVector* outputVector)
@@ -279,7 +279,7 @@ int SliceImage::RequestData(
 // This method contains a switch statement that calls the correct
 // templated function for the input data type.  This method does handle
 // boundary conditions.
-void SliceImage::ThreadedRequestData(vtkInformation*,
+void LofarSliceImage::ThreadedRequestData(vtkInformation*,
 		vtkInformationVector** inputVector,
 		vtkInformationVector*,
 		vtkImageData*** inData,
@@ -319,7 +319,7 @@ void SliceImage::ThreadedRequestData(vtkInformation*,
 	switch(inputArray->GetDataType())
 	{
 	vtkTemplateMacro(
-			SliceImageExecute(this, input, static_cast<VTK_TT*>(inPtr),
+			LofarSliceImageExecute(this, input, static_cast<VTK_TT*>(inPtr),
 					output, outPtr, outExt, threadId)
 	);
 	default:
@@ -328,7 +328,7 @@ void SliceImage::ThreadedRequestData(vtkInformation*,
 	}
 }
 
-unsigned long SliceImage::GetMTime()
+unsigned long LofarSliceImage::GetMTime()
 {
 	unsigned long time = vtkThreadedImageAlgorithm::GetMTime();
 	if (LineSegment != NULL)
@@ -338,7 +338,7 @@ unsigned long SliceImage::GetMTime()
 	return time;
 }
 
-std::vector<SliceImage::SplinePoint> SliceImage::LinearizeClippingFunction() {
+std::vector<LofarSliceImage::SplinePoint> LofarSliceImage::LinearizeClippingFunction() {
 	std::vector<SplinePoint> result;
 	switch (m_clip_type) {
 	case LINE: {
