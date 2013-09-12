@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 SET(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/CMakeModules;${CMAKE_MODULE_PATH}"
 )
+FIND_PACKAGE(Qt4 REQUIRED QtHelp)
+INCLUDE(${QT_USE_FILE})
 FIND_PACKAGE(HDF5 REQUIRED)
 FIND_PACKAGE(Wcs REQUIRED)
 FIND_PACKAGE(CasaCore REQUIRED
@@ -51,7 +53,7 @@ IF(PARAVIEW_BUILD_QT_GUI)
       src/LofarApplyMask.h src/LofarApplyMask.cpp
       src/LofarIntegrateFrequencies.h src/LofarIntegrateFrequencies.cpp
     )
-  target_link_libraries(FitsReader ${HDF5_LIBRARY} ${CASACORE_LIBRARIES} ${WCS_LIBRARIES})
+  target_link_libraries(FitsReader ${HDF5_LIBRARY} ${CASACORE_LIBRARIES} ${WCS_LIBRARIES} ${QT_LIBRARIES})
 
 #  add_executable(test_application src/main.cpp)
 #  target_link_libraries(test_application FitsReader)
