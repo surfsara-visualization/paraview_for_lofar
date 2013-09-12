@@ -13,7 +13,9 @@
 #include <vtksys/ios/sstream>
 
 #include <ctime> 
+#ifdef USE_FFTW
 #include <fftw3.h>
+#endif // USE_FFTW
 
 vtkStandardNewMacro(LofarGaussianBlur);
 
@@ -209,6 +211,7 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
 	//    std::cout << "X     duration : " << duration/(double)CLOCKS_PER_SEC << "s (was 1.8)"  << std::endl;
 	//    std::cout << "Total duration : " << (total_stop-total_start)/(double)CLOCKS_PER_SEC << "s (was 3.88)"  << std::endl;
 }
+#ifdef USE_FFTW
 //----------------------------------------------------------------------------
 // This execute method handles boundaries.
 // it handles boundaries. Pixels are just replicated to get values
@@ -347,6 +350,7 @@ void LofarGaussianBlurExecuteFFTW(LofarGaussianBlur *self,
 	fftw_destroy_plan(forward_plan);
 	fftw_destroy_plan(inverse_plan);
 }
+#endif // USE_FFTW
 
 int LofarGaussianBlur::RequestData(
 		vtkInformation* request,
