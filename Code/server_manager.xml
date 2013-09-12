@@ -1,4 +1,35 @@
 <ServerManagerConfiguration>
+  <!-- FITS Reader -->
+  <ProxyGroup name="sources">
+    <SourceProxy name="FitsReader" 
+                 class="FitsReader"
+                 label="FITS reader for Lofar">
+      <Documentation
+          short_help="Read a FITS/HDF5 file."
+          long_help="Read a FITS/HDF5 file into an image data.">
+        The FITS reader reads FITS/HDF5 files, and the output is a uniform rectilinear (image/volume) dataset.
+        The default file extension is .fits / .h5.
+      </Documentation>
+      <StringVectorProperty
+          name="FileName"
+          animateable="0"
+          command="SetFileName"
+          number_of_elements="1"
+          panel_visibility="never">
+        <FileListDomain name="files"/>
+        <Documentation>
+          This property specifies the file name for the FITS reader.
+        </Documentation>
+      </StringVectorProperty>
+
+      <Hints>
+        <ReaderFactory extensions="fits h5" file_description="FITS/HDF5 Files" />
+      </Hints>
+      <!-- End FitsReader -->
+    </SourceProxy>
+  </ProxyGroup>
+  
+  <!-- Helper classes -->
   <ProxyGroup name="lofar_sources">
     <!-- Spline is used by the image slicer as an input for the slicing function -->
     <Proxy class="vtkParametricSpline"
@@ -85,38 +116,10 @@
       <!-- End LineSource -->
     </SourceProxy>
   </ProxyGroup>
-  <ProxyGroup name="sources">
-    <SourceProxy name="FitsReader" 
-                 class="FitsReader"
-                 label="FITS reader for Lofar">
-      <Documentation
-          short_help="Read a FITS/HDF5 file."
-          long_help="Read a FITS/HDF5 file into an image data.">
-        The FITS reader reads FITS/HDF5 files, and the output is a uniform rectilinear (image/volume) dataset.
-        The default file extension is .fits / .h5.
-      </Documentation>
-      <StringVectorProperty
-          name="FileName"
-          animateable="0"
-          command="SetFileName"
-          number_of_elements="1"
-          panel_visibility="never">
-        <FileListDomain name="files"/>
-        <Documentation>
-          This property specifies the file name for the FITS reader.
-        </Documentation>
-      </StringVectorProperty>
 
-      <Hints>
-        <ReaderFactory extensions="fits h5" file_description="FITS/HDF5 Files" />
-      </Hints>
-      <!-- End FitsReader -->
-    </SourceProxy>
-  </ProxyGroup>
-  
+  <!-- Added filters -->
   <ProxyGroup name="filters">
-
-    <!-- *** SliceImage *** -->
+    <!-- LofarSliceImage -->
     <SourceProxy name="Slice image" class="LofarSliceImage" label="Lofar: Slice image data">
       <Documentation
           long_help="Takes a slice along a line segment or spline through the spatial axes."
@@ -147,10 +150,11 @@
       </ProxyProperty>
     </SourceProxy>
 
+    <!-- LofarGaussianBlur -->
     <SourceProxy name="Gaussian blur" class="LofarGaussianBlur" label="Lofar: Gaussian blur">
       <Documentation
           long_help="Gaussian blur on image data."
-          short_help="NGHK: Todo.">
+          short_help="Apply a Gaussian blur to the image.">
       </Documentation>
       <InputProperty
           name="Input"
@@ -187,10 +191,12 @@
           default_values="5">
       </IntVectorProperty>
     </SourceProxy>
+
+    <!-- LofarMaskNoise -->
     <SourceProxy name="Mask noise" class="LofarMaskNoise" label="Lofar: Mask noise">
       <Documentation
-          long_help="Mask noise."
-          short_help="NGHK: Todo.">
+          long_help="Mask the noisy region in an image."
+          short_help="Noise is specified as a constant times the standard deviation of the signal. The standard deviation is computed per image (independent for each frequency).">
       </Documentation>
       <InputProperty
           name="Input"
@@ -226,10 +232,11 @@
       </IntVectorProperty>
     </SourceProxy>
 
+    <!-- LofarApplyMask -->
     <SourceProxy name="Apply mask" class="LofarApplyMask" label="Lofar: Apply mask">
       <Documentation
-          long_help="Apply mask"
-          short_help="NGHK: Todo.">
+          long_help="Reset the signal in a masked region"
+          short_help="Reset the signal in a masked region to a constant value.">
       </Documentation>
       <InputProperty
           command="SetInputConnection"
@@ -248,7 +255,7 @@
         <InputArrayDomain attribute_type="point"
                           name="mask_array"
                           number_of_components="1" />
-      </InputProperty> 
+      </InputProperty>
       <StringVectorProperty
           name="SelectFilterArray"
           command="SetInputArrayToProcess"
@@ -266,7 +273,6 @@
           This property indicates which array to filter for.
         </Documentation>
       </StringVectorProperty>	
-
       <StringVectorProperty
           name="SelectRestrictionArray"
           command="SetInputArrayToProcess"
@@ -286,6 +292,7 @@
         </Documentation>
       </StringVectorProperty>	
     </SourceProxy>
+
     <SourceProxy name="Integrate frequencies" class="LofarIntegrateFrequencies" label="Lofar: Integrate over the frequency bands">
       <Documentation
           short_help="Integrate the spatial positions over the frequency bands (z-axis).">
