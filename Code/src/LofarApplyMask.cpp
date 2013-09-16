@@ -14,11 +14,14 @@
 
 vtkStandardNewMacro(LofarApplyMask);
 
+/// The function where the actual work is done is LofarApplyMaskExecute
+/// The rest is a lot of wrapping code
+
 //----------------------------------------------------------------------------
 // Construct an instance of LofarApplyMask fitler.
 LofarApplyMask::LofarApplyMask()
 {
-	// by default process active point scalars
+	// Allow two input fields (the unmasked values and the mask)
 	this->SetInputArrayToProcess(0,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
 			vtkDataSetAttributes::SCALARS);
 	this->SetInputArrayToProcess(1,0,0,vtkDataObject::FIELD_ASSOCIATION_POINTS,
@@ -47,8 +50,7 @@ int LofarApplyMask::RequestInformation(vtkInformation*,
 	// Store the new whole extent for the output.
 	outInfo->Set(vtkStreamingDemandDrivenPipeline::WHOLE_EXTENT(), extent, 6);
 
-	// Set the number of point data components to the number of
-	// components in the gradient vector.
+	// Set the number of point data components to one double.
 	vtkDataObject::SetPointDataActiveScalarInfo(outInfo, VTK_DOUBLE, 1);
 
 	return 1;
@@ -81,9 +83,7 @@ int LofarApplyMask::RequestUpdateExtent(vtkInformation*,
 }
 
 //----------------------------------------------------------------------------
-// This execute method handles boundaries.
-// it handles boundaries. Pixels are just replicated to get values
-// out of extent.
+// The function that does the work, applies the mask
 template <class T>
 void LofarApplyMaskExecute(LofarApplyMask *self,
 		vtkImageData *inData, T *inPtr, char *maskPtr,
@@ -99,7 +99,6 @@ void LofarApplyMaskExecute(LofarApplyMask *self,
 	int *inExt = inData->GetExtent();
 	int *wholeExtent;
 	vtkIdType *inIncs;
-	double r[3];
 
 	// find the region to loop over
 	maxX = outExt[1] - outExt[0];
@@ -111,14 +110,6 @@ void LofarApplyMaskExecute(LofarApplyMask *self,
 	// Get increments to march through data
 	inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
 	outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
-
-	// The data spacing is important for computing the gradient.
-	// central differences (2 * ratio).
-	// Negative because below we have (min - max) for dx ...
-	inData->GetSpacing(r);
-	r[0] = -0.5 / r[0];
-	r[1] = -0.5 / r[1];
-	r[2] = -0.5 / r[2];
 
 	// get some other info we need
 	inIncs = inData->GetIncrements();
@@ -132,7 +123,8 @@ void LofarApplyMaskExecute(LofarApplyMask *self,
 			(outExt[2]-inExt[2])*inIncs[1] +
 			(outExt[4]-inExt[4])*inIncs[2];
 
-	// Loop through output pixels
+	// Loop through output pixels and mask the input pixels
+	// Increment the pointer to avoid multiplications
 	for (idxZ = wholeExtent[4]; idxZ <= maxZ; idxZ++)
 	{
 		for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
@@ -144,7 +136,9 @@ void LofarApplyMaskExecute(LofarApplyMask *self,
 			}
 			for (idxX = 0; idxX <= maxX; idxX++)
 			{
+			    // In this line the mask is applied. The mask is either 0 or 1, hence, multiplying with the masks effectively applies it
 				*outPtr = (*maskPtr) * (*inPtr);
+
 				outPtr++;
 				inPtr++;
 				maskPtr++;
@@ -169,11 +163,12 @@ int LofarApplyMask::RequestData(
 	{
 		return 0;
 	}
+
+	// Create the new masked output
 	vtkImageData* output = vtkImageData::GetData(outputVector);
 	vtkDataArray* outArray = output->GetPointData()->GetScalars();
 	vtksys_ios::ostringstream newname;
-	newname << (outArray->GetName()?outArray->GetName():"")
-    						<< "Masked";
+	newname << (outArray->GetName()?outArray->GetName():"") << "Masked";
 	outArray->SetName(newname.str().c_str());
 
 	// Why not pass the original array?
@@ -230,8 +225,7 @@ void LofarApplyMask::ThreadedRequestData(vtkInformation*,
 		return;
 	}
 
-	// Gradient makes sense only with one input component.  This is not
-	// a Jacobian filter.
+	// The current implementation only applies the mask to one input component.
 	if(inputArray->GetNumberOfComponents() != 1)
 	{
 		vtkErrorMacro("No input array found");
@@ -243,6 +237,7 @@ void LofarApplyMask::ThreadedRequestData(vtkInformation*,
 		return;
 	}
 
+	/// The vtkTemplateMacro does the magic and calls LofarApplyMaskExecute with the right template arguments based on the input.
 	void* inPtr = inputArray->GetVoidPointer(0);
 	void* maskPtr = maskArray->GetVoidPointer(0);
 	double* outPtr = static_cast<double *>(output->GetScalarPointerForExtent(outExt));

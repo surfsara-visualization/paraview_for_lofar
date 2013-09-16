@@ -28,7 +28,6 @@ INCLUDE(${PARAVIEW_USE_FILE})
 
 include_directories("src")
 include_directories(${QT_INCLUDES})
-message(${QT_INCLUDES})
 IF(PARAVIEW_BUILD_QT_GUI)
   include_directories("${WCS_INCLUDE_DIR}")
   include_directories("${CASACORE_INCLUDE_DIR}")
@@ -47,7 +46,6 @@ IF(PARAVIEW_BUILD_QT_GUI)
     SERVER_MANAGER_SOURCES
       src/FitsReader.h src/FitsReader.cpp
       src/LofarSliceImage.h src/LofarSliceImage.cpp
-      src/AccumulateSlices.h src/AccumulateSlices.cpp
       src/LofarGaussianBlur.h src/LofarGaussianBlur.cpp
       src/LofarMaskNoise.h src/LofarMaskNoise.cpp
       src/LofarApplyMask.h src/LofarApplyMask.cpp
