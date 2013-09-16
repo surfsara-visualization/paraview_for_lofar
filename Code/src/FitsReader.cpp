@@ -1,8 +1,10 @@
 #include "FitsReader.h"
 #include <ctime>
 
-//#define LOG(msg)
-#define LOG(msg) std::cout << __PRETTY_FUNCTION__ << ", l" << __LINE__ << ": " << msg << std::endl;
+std::ofstream output_file;
+#define LOG(msg)
+//#define LOG(msg) vtkWarningMacro(<< __PRETTY_FUNCTION__ << ", l" << __LINE__ << ": " << msg);
+//#define LOG(msg) {output_file << __PRETTY_FUNCTION__ << ", l" << __LINE__ << ": " << msg << std::endl;}
 template <class T>
 void suppress_unused_warning(const T &) {}
 
@@ -19,6 +21,8 @@ void suppress_unused_warning(const T &) {}
 #include <images/Images/FITSImage.h>
 #include <images/Images/ImageOpener.h>
 #include <coordinates/Coordinates/DirectionCoordinate.h>
+
+#include <mpi.h>
 
 vtkStandardNewMacro(FitsReader)
 
@@ -40,6 +44,17 @@ FitsReader::~FitsReader()
 //----------------------------------------------------------------------------
 void FitsReader::ExecuteInformation()
 {
+    int rank = 0;
+    //MPI_Comm_rank (MPI_COMM_WORLD, &rank);    /* get current process id */
+
+
+    if (!output_file.is_open()) {
+        char filename[80];
+        sprintf(filename, "/tmp/%d.txt", rank);
+        output_file.open(filename);
+        LOG("thisptr: " << this);
+    }
+
     using namespace casa;
 
     this->ComputeInternalFileName(this->DataExtent[4]);
@@ -67,6 +82,8 @@ void FitsReader::ExecuteInformation()
     this->DataExtent[1] = casa_image->shape()(0) - 1;
     this->DataExtent[2] = 0;
     this->DataExtent[3] = casa_image->shape()(1) - 1;
+    this->DataExtent[4] = 0;
+    this->DataExtent[5] = 0;
     if (casa_image->shape().size() >= 3)
     {
         this->DataExtent[4] = 0;
@@ -156,32 +173,34 @@ void FitsReader::ExecuteDataWithInformation(vtkDataObject* output,
     IPosition shape = casa_image->shape();
     IPosition pos(shape.size(), 0);
 
-
     clock_t start_copy_time = std::clock();
     {
         Vector<double> increment = casa_image->coordinates().increment();
+
+        bool flip[4];
+        for (size_t i=0; i<increment.size(); ++i) flip[i] = (increment[i]<0);
+
+        int ext[6];
+        data->GetExtent(ext);
+        int dx,dy,dz, x0,y0,z0;
+        dx = ext[1]-ext[0]; // Careful one off: -1
+        dy = ext[3]-ext[2]; // Careful one off: -1
+        dz = ext[5]-ext[4]; // Careful one off: -1
+        x0 = ext[0];
+        y0 = ext[2];
+        z0 = ext[4];
+        if (flip[0]) x0 = this->DataExtent[1] - ext[1];
+        if (flip[1]) y0 = this->DataExtent[3] - ext[3];
+        if (flip[2]) z0 = this->DataExtent[5] - ext[5];
+        LOG(std::string("Extent: ") << ext[0] << " " << ext[1] << " " << ext[2] << " " << ext[3] << " " << ext[4] << " " << ext[5]);
+//        LOG("flip: " << flip[0] << " " << flip[1] << " " << flip[2]);
+
         switch (increment.size()) {
         case 2: {
             assert(false && "Not yet implemented, no 2D data yet.");
             break;
         }
         case 3: {
-            bool flip[3];
-            for (int i=0; i<3; ++i) flip[i] = (increment[i]<0);
-
-            int ext[6];
-            data->GetExtent(ext);
-            int dx,dy,dz, x0,y0,z0;
-            dx = ext[1]-ext[0]; // Careful one off: -1
-            dy = ext[3]-ext[2]; // Careful one off: -1
-            dz = ext[5]-ext[4]; // Careful one off: -1
-            x0 = ext[0];
-            y0 = ext[2];
-            z0 = ext[4];
-            if (flip[0]) x0 = this->DataExtent[1] - ext[1];
-            if (flip[1]) y0 = this->DataExtent[3] - ext[3];
-            if (flip[2]) z0 = this->DataExtent[5] - ext[5];
-
             Slicer s(IPosition(3, x0,y0,z0), IPosition(3, dx,dy,dz));
             Cube<float> cube(casa_image->get(false)(s));
             float *output_data = (float*)data->GetScalarPointer();
@@ -204,22 +223,6 @@ void FitsReader::ExecuteDataWithInformation(vtkDataObject* output,
             break;
         }
         case 4: {
-            bool flip[4];
-            for (int i=0; i<4; ++i) flip[i] = (increment[i]<0);
-
-            int ext[6];
-            data->GetExtent(ext);
-            int dx,dy,dz, x0,y0,z0;
-            dx = ext[1]-ext[0]; // Careful one off: -1
-            dy = ext[3]-ext[2]; // Careful one off: -1
-            dz = ext[5]-ext[4]; // Careful one off: -1
-            x0 = ext[0];
-            y0 = ext[2];
-            z0 = ext[4];
-            if (flip[0]) x0 = this->DataExtent[1] - ext[1];
-            if (flip[1]) y0 = this->DataExtent[3] - ext[3];
-            if (flip[2]) z0 = this->DataExtent[5] - ext[5];
-
             Slicer s(IPosition(4, x0,y0,z0,0), IPosition(4, dx,dy,dz,0));
             Array<float> cube(casa_image->get(false)(s));
             float *output_data = (float*)data->GetScalarPointer();
@@ -246,11 +249,11 @@ void FitsReader::ExecuteDataWithInformation(vtkDataObject* output,
     clock_t end_copy_time = std::clock();
     double dt = ((end_copy_time-start_copy_time)*1.0/CLOCKS_PER_SEC);
     suppress_unused_warning(dt);
-    LOG("memcopy time: " << dt);
 
-    vtkFieldData* fd = vtkFieldData::New();
 
     {
+        vtkFieldData* fd = vtkFieldData::New();
+
         const DirectionCoordinate& coordinate =
                         casa_image->coordinates().directionCoordinate(0);
         const char* names[] = { "AxisTitleForX", "AxisTitleForY", "AxisTitleForZ" };
@@ -266,8 +269,9 @@ void FitsReader::ExecuteDataWithInformation(vtkDataObject* output,
             fd->AddArray(TitleArray);
             TitleArray->Delete();
         }
+
+        output->SetFieldData(fd);
     }
-    output->SetFieldData(fd);
 }
 
 //----------------------------------------------------------------------------

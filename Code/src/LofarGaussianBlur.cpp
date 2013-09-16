@@ -12,8 +12,6 @@
 #include <fstream>
 #include <vtksys/ios/sstream>
 
-#include <ctime> 
-
 vtkStandardNewMacro(LofarGaussianBlur);
 
 /// The function where the actual work is done is LofarGaussianBlurExecute
@@ -100,7 +98,6 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
     int *inExt = inData->GetExtent();
     int *wholeExtent;
     vtkIdType *inIncs;
-    double r[3];
 
     // find the region to loop over
     maxX = outExt[1] - outExt[0];
@@ -119,14 +116,6 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
     inData->GetContinuousIncrements(outExt, inIncX, inIncY, inIncZ);
     outData->GetContinuousIncrements(outExt, outIncX, outIncY, outIncZ);
 
-    // The data spacing is important for computing the gradient.
-    // central differences (2 * ratio).
-    // Negative because below we have (min - max) for dx ...
-    inData->GetSpacing(r);
-    r[0] = -0.5 / r[0];
-    r[1] = -0.5 / r[1];
-    r[2] = -0.5 / r[2];
-
     // get some other info we need
     inIncs = inData->GetIncrements();
     wholeExtent = inData->GetExtent();
@@ -136,10 +125,10 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
                     (outExt[2]-inExt[2])*inIncs[1] +
                     (outExt[4]-inExt[4])*inIncs[2];
 
-    {
-        double sum = 0.0;
+    {   // The Gaussian kernel
         for (int i=0; i<N; ++i) kernel[i] = pow(M_E, -(i-(N-1)/2)*(i-(N-1)/2)/(2*N*N));
-
+        // Normalize
+        double sum = 0.0;
         for (int i=0; i<N; ++i) sum += kernel[i];
         for (int i=0; i<N; ++i) kernel[i] /= sum;
     }
@@ -153,6 +142,9 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
             count++;
         }
 
+        // We split the Gaussian kernel in two parts: in the y-direction and the x-direction
+        // This is allowed for a Gaussian kernel and saves calculations
+
         {   // Copy data to the tmp buffer, y-kernel
             double *tmp_idx = &tmp_img[0];
             for (int y=0; y<=maxY; ++y) {
@@ -164,6 +156,7 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
                     tmp_rows[N_over_2+yp] = &inPtr[yp * (maxX+1)];
 
                 for (int x=0; x<=maxX; ++x) {
+                    // Iterate over the kernel. Special care is needed for the boundary where you cannot use the entire kernel.
                     for (int yp = std::max(y-N_over_2, 0)-y; yp < std::min(maxY, y+N_over_2)-y; ++yp) {
                         // Multiply the kernel with the data
                         *tmp_idx += kernel[N_over_2 + yp] * *tmp_rows[N_over_2+yp];
@@ -180,7 +173,6 @@ void LofarGaussianBlurExecute(LofarGaussianBlur *self,
             inPtr += inIncZ;
         }
 
-        //        std::clock_t start = clock();
         {   // Copy the data to the output buffer, x-kernel
             double *tmp_idx = &tmp_img[0];
             for (int y=0; y<=maxY; ++y) {
@@ -228,8 +220,7 @@ int LofarGaussianBlur::RequestData(
 
 //----------------------------------------------------------------------------
 // This method contains a switch statement that calls the correct
-// templated function for the input data type.  This method does handle
-// boundary conditions.
+// templated function for the input data type.
 void LofarGaussianBlur::ThreadedRequestData(vtkInformation*,
                 vtkInformationVector** inputVector,
                 vtkInformationVector*,
@@ -242,7 +233,6 @@ void LofarGaussianBlur::ThreadedRequestData(vtkInformation*,
     vtkImageData* input = inData[0][0];
     vtkImageData* output = outData[0];
 
-    // The ouptut scalar type must be double to store proper gradients.
     if(output->GetScalarType() != VTK_DOUBLE)
     {
         vtkErrorMacro("Execute: output ScalarType is "
@@ -257,16 +247,12 @@ void LofarGaussianBlur::ThreadedRequestData(vtkInformation*,
         return;
     }
 
-    // Gradient makes sense only with one input component.  This is not
-    // a Jacobian filter.
+    // Gaussian kernel is only implemented for one input component.
     if(inputArray->GetNumberOfComponents() != 1)
     {
         vtkErrorMacro(
                         "Execute: input has more than one component. "
-                        "The input to gradient should be a single component image. "
-                        "Think about it. If you insist on using a color image then "
-                        "run it though RGBToHSV then ExtractComponents to get the V "
-                        "components. That's probably what you want anyhow.");
+                        "The Gaussian kernel is only implemented for one component.");
         return;
     }
 

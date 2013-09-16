@@ -14,6 +14,9 @@
 
 vtkStandardNewMacro(LofarMaskNoise);
 
+/// The function where the actual work is done is LofarIntegrateFrequenciesExecute
+/// See Lofar Gaussian blur for more comments on the structure of the code
+
 //----------------------------------------------------------------------------
 // Construct an instance of LofarMaskNoise fitler.
 LofarMaskNoise::LofarMaskNoise()
