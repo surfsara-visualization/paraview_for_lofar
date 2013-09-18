@@ -72,8 +72,10 @@ int LofarMaskNoise::RequestUpdateExtent(vtkInformation*,
 	// Get the requested update extent from the output.
 	int inUExt[6];
 	outInfo->Get(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inUExt);
-	inUExt[4] = wholeExtent[4];
-	inUExt[5] = wholeExtent[5];
+    inUExt[0] = wholeExtent[0];
+    inUExt[1] = wholeExtent[1];
+    inUExt[2] = wholeExtent[2];
+    inUExt[3] = wholeExtent[3];
 
 	// Store the update extent needed from the intput.
 	inInfo->Set(vtkStreamingDemandDrivenPipeline::UPDATE_EXTENT(), inUExt, 6);
@@ -91,6 +93,7 @@ void LofarMaskNoiseExecute(LofarMaskNoise *self,
 		vtkImageData *outData, char *outPtr,
 		int outExt[6], int id)
 {
+    T *imagePtr = inPtr;
 	int idxX, idxY, idxZ;
 	int maxX, maxY, maxZ;
 	vtkIdType inIncX, inIncY, inIncZ;
@@ -125,10 +128,11 @@ void LofarMaskNoiseExecute(LofarMaskNoise *self,
 	inIncs = inData->GetIncrements();
 	wholeExtent = inData->GetExtent();
 
-	// Move the pointer to the correct starting position.
-	inPtr += (outExt[0]-inExt[0])*inIncs[0] +
-			(outExt[2]-inExt[2])*inIncs[1] +
-			(outExt[4]-inExt[4])*inIncs[2];
+    // Move the pointer to the correct starting position.
+    imagePtr += (outExt[4]-inExt[4])*inIncs[2];
+
+    // Move the pointer to the correct starting position.
+    inPtr = imagePtr + (outExt[0]-inExt[0])*inIncs[0] + (outExt[2]-inExt[2])*inIncs[1];
 
 	// Loop through output pixels
 	for (idxZ = wholeExtent[4]; idxZ <= maxZ; idxZ++)
@@ -136,13 +140,15 @@ void LofarMaskNoiseExecute(LofarMaskNoise *self,
 		double sq_average = 0.0;
 		double average = 0.0;
 
-		T *inPtr2 = inPtr;
+		T *inPtr2 = imagePtr;
 
-		for (idxY = 0; !self->AbortExecute && idxY <= maxY; idxY++)
+		// Loop over the entire image to get the distribution
+
+		for (idxY = wholeExtent[2]; !self->AbortExecute && idxY <= wholeExtent[3]; idxY++)
 		{
 			double sq_average_x = 0.0;
 			double average_x = 0.0;
-			for (idxX = 0; idxX <= maxX; idxX++)
+			for (idxX = wholeExtent[0]; idxX <= wholeExtent[1]; idxX++)
 			{
 				sq_average_x += (*inPtr2)*(*inPtr2);
 				average_x += *inPtr2;
@@ -151,11 +157,9 @@ void LofarMaskNoiseExecute(LofarMaskNoise *self,
 
 			sq_average += sq_average_x;
 			average += average_x;
-
-			inPtr2 += inIncY;
 		}
 
-		double n = maxY*1.0*maxX;
+		double n = (wholeExtent[1]-wholeExtent[0])*1.0*(wholeExtent[3]-wholeExtent[2]);
 		double mean = average/n;
 		double deviation = sqrt(sq_average/n - mean*mean);
 		double limit = self->GetStandardDev()*deviation;
@@ -178,6 +182,7 @@ void LofarMaskNoiseExecute(LofarMaskNoise *self,
 		}
 		outPtr += outIncZ;
 		inPtr += inIncZ;
+        imagePtr += inIncZ;
 	}
 }
 
@@ -189,20 +194,20 @@ int LofarMaskNoise::RequestData(
 	if (!this->Superclass::RequestData(request, inputVector, outputVector))
 	{
 		return 0;
+
 	}
 	vtkImageData* output = vtkImageData::GetData(outputVector);
 	vtkDataArray* outArray = output->GetPointData()->GetScalars();
 	vtksys_ios::ostringstream newname;
-	newname << (outArray->GetName()?outArray->GetName():"")
-    						<< "Mask";
+	newname << (outArray->GetName()?outArray->GetName():"") << "Mask";
 	outArray->SetName(newname.str().c_str());
 
 
 	// Why not pass the original array?
 	if (this->GetInputArrayToProcess(0, inputVector))
 	{
-		output->GetPointData()->AddArray(
-				this->GetInputArrayToProcess(0, inputVector));
+	          output->GetPointData()->AddArray(
+	                  this->GetInputArrayToProcess(0, inputVector));
 	}
 	return 1;
 }
