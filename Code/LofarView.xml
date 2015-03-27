@@ -1,0 +1,8 @@
+<ServerManagerConfiguration>
+  <ProxyGroup name="views">
+    <RenderViewProxy name="LofarView" class="vtkPVLofarView"
+        processes="client|renderserver|dataserver"
+        base_proxygroup="views" base_proxyname="RenderView">
+    </RenderViewProxy>
+  </ProxyGroup>
+</ServerManagerConfiguration>
